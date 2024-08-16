@@ -1,6 +1,5 @@
 name: CI/CD Pipeline
 
-# Trigger the pipeline on push or pull request to the main branch
 on:
   push:
     branches:
@@ -17,44 +16,40 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v3
       with:
-        node-version: '14'
+        distribution: 'adopt'
+        java-version: '11'
     
-    - name: Install dependencies
-      run: npm install
-    
-    - name: Build the application
-      run: npm run build
+    - name: Build with Maven
+      run: mvn clean package
     
     - name: Upload build artifacts
       uses: actions/upload-artifact@v2
       with:
         name: build-artifact
-        path: |
-          build/
+        path: target/*.jar
 
   # Test Stage
   test:
     runs-on: ubuntu-latest
     needs: build
     steps:
-    - name: Download build artifacts
-      uses: actions/download-artifact@v2
-      with:
-        name: build-artifact
+    - name: Checkout code
+      uses: actions/checkout@v2
     
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
+    - name: Set up JDK
+      uses: actions/setup-java@v3
       with:
-        node-version: '14'
+        distribution: 'adopt'
+        java-version: '11'
     
-    - name: Run unit tests
-      run: npm test
+    - name: Run tests
+      run: mvn test
     
     - name: Run code quality checks
-      run: npm run lint && npm run coverage
+      run: mvn checkstyle:check
 
   # Deploy Stage
   deploy:
@@ -63,5 +58,5 @@ jobs:
     steps:
     - name: Deploy to staging environment
       run: echo "Deploying application to staging environment..."
-      # Replace this with actual deployment commands, e.g., deploying to a server, or a cloud service
-      # Example: scp -r build/ user@server:/path/to/staging/
+      # Replace this with actual deployment commands, such as SCP or SSH
+      # Example: scp target/*.jar user@server:/path/to/staging/
